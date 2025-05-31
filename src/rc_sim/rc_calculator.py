@@ -3,14 +3,15 @@ import logging
 
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s', handlers=[logging.StreamHandler()])
 
+
 class RCCalculator:
     def __init__(self):
-        self.C = 1e-6  # Ёмкость (Ф)
-        self.R = 1000  # Сопротивление (Ом)
-        self.V0 = 10   # Напряжение (В)
+        self.C = 1e-6
+        self.R = 1000
+        self.V0 = 10
         self.source_type = 'DC'
-        self.alpha = 0.0001  # Температурный коэффициент
-        self.temperature = 25  # Температура (°C)
+        self.alpha = 0.0001
+        self.temperature = 25
         self.time = None
         self.Vc = None
         self.I = None
@@ -19,10 +20,12 @@ class RCCalculator:
         self.tau = 0
         self.phase_shift = 0
 
+
     def set_parameters(self, C, R, V0, source_type, alpha, temperature):
         if C <= 0 or R <= 0 or V0 <= 0:
             logging.error("Параметры должны быть положительными")
             return False
+
         self.C = C
         self.R = R
         self.V0 = V0
@@ -32,10 +35,12 @@ class RCCalculator:
         logging.debug(f"Параметры установлены: C={C}, R={R}, V0={V0}, source_type={source_type}, alpha={alpha}, temperature={temperature}")
         return True
 
+
     def calculate(self, time_step=0.00001, discharge=False):
         try:
             R_temp = self.R * (1 + self.alpha * (self.temperature - 25))
             self.tau = R_temp * self.C
+
             if self.tau <= 0 or not np.isfinite(self.tau):
                 logging.error(f"Некорректная постоянная времени: tau={self.tau}")
                 return False

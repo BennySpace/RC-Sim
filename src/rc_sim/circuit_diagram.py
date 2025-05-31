@@ -3,15 +3,18 @@ from PyQt6.QtGui import QPainter, QPen, QBrush, QColor
 from PyQt6.QtCore import QRectF
 import numpy as np
 
+
 class CircuitDiagram(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setFixedSize(200, 100)
         self.charge_level = 0.0
 
+
     def set_charge_level(self, Vc, V0):
         self.charge_level = Vc / V0 if V0 != 0 else 0.0
         self.update()
+
 
     def paintEvent(self, event):
         painter = QPainter(self)

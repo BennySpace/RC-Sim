@@ -6,6 +6,7 @@ import os
 import tempfile
 import uuid
 
+
 class HelpWindow(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -13,6 +14,7 @@ class HelpWindow(QDialog):
         self.setGeometry(200, 200, 700, 500)
         self.temp_files = []
         self.setup_ui()
+
 
     def setup_ui(self):
         layout = QVBoxLayout(self)
@@ -57,6 +59,7 @@ class HelpWindow(QDialog):
             (r"I(t) = \frac{V_0}{R} e^{-t / \tau}", "Ток"),
             (r"\tau = R \cdot C", "Постоянная времени")
         ]
+
         for formula, desc in dc_formulas:
             container_layout.addWidget(self.create_formula_label(formula, desc))
 
@@ -70,6 +73,7 @@ class HelpWindow(QDialog):
             (r"V_C(t) = \frac{V_0 \sin(\omega t)}{\sqrt{1 + (\omega R C)^2}}", "Напряжение"),
             (r"I(t) = \frac{V_0}{Z} \sin\left(\omega t - \arctan\left(\frac{1}{\omega R C}\right)\right)", "Ток")
         ]
+
         for formula, desc in ac_formulas:
             container_layout.addWidget(self.create_formula_label(formula, desc))
 
@@ -82,6 +86,7 @@ class HelpWindow(QDialog):
             (r"E = \frac{1}{2} C V_C^2", "Энергия конденсатора"),
             (r"P = \text{mean}(I^2 R)", "Тепловые потери")
         ]
+
         for formula, desc in energy_formulas:
             container_layout.addWidget(self.create_formula_label(formula, desc))
 
@@ -90,6 +95,7 @@ class HelpWindow(QDialog):
         scroll_area.setWidgetResizable(True)
         scroll_area.setWidget(container)
         layout.addWidget(scroll_area)
+
 
     def create_formula_label(self, formula, description):
         temp_file = os.path.join(tempfile.gettempdir(), f"formula_{uuid.uuid4()}.png")
@@ -112,4 +118,5 @@ class HelpWindow(QDialog):
                 os.remove(temp_file)
             except OSError:
                 pass
+
         event.accept()

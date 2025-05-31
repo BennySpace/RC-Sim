@@ -9,6 +9,7 @@ import numpy as np
 import logging
 import os
 
+
 class PreviewDialog(QDialog):
     def __init__(self, data, parent=None):
         super().__init__(parent)
@@ -23,6 +24,7 @@ class PreviewDialog(QDialog):
         close_button.clicked.connect(self.close)
         layout.addWidget(close_button)
 
+
 class RCSimulator(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -33,6 +35,7 @@ class RCSimulator(QMainWindow):
         self.circuit_diagram = CircuitDiagram()
         self.is_animation_paused = False
         self.setup_ui()
+
 
     def setup_ui(self):
         central_widget = QWidget()
@@ -80,7 +83,6 @@ class RCSimulator(QMainWindow):
         form_layout.addRow("Точность экспорта (знаков):", self.export_precision_input)
         form_layout.addRow("Десятичный разделитель:", self.csv_delimiter_combo)
 
-        # Ползунок скорости анимации
         self.animation_speed_label = QLabel("Скорость анимации (мс): 50")
         self.animation_speed_slider = QSlider(Qt.Orientation.Horizontal)
         self.animation_speed_slider.setMinimum(10)
@@ -134,15 +136,19 @@ class RCSimulator(QMainWindow):
         main_layout.addWidget(input_widget)
         main_layout.addWidget(self.plot_widget, stretch=1)
 
-    def validate_input(self, line_edit):
+
+    @staticmethod
+    def validate_input(line_edit):
         try:
             float(line_edit.text())
             line_edit.setStyleSheet("border: 1px solid #4da8da;")
         except ValueError:
             line_edit.setStyleSheet("border: 1px solid red;")
 
+
     def update_animation_speed_label(self):
         self.animation_speed_label.setText(f"Скорость анимации (мс): {self.animation_speed_slider.value()}")
+
 
     def run_simulation(self):
         try:
@@ -184,11 +190,14 @@ class RCSimulator(QMainWindow):
         else:
             QMessageBox.critical(self, "Ошибка", "Ошибка в расчётах.")
 
+
     def toggle_animation(self):
         if not hasattr(self.plot_widget, 'anim') or self.plot_widget.anim is None:
             QMessageBox.warning(self, "Предупреждение", "Сначала запустите симуляцию.")
             return
+
         self.is_animation_paused = not self.is_animation_paused
+
         if self.is_animation_paused:
             self.plot_widget.anim.event_source.stop()
             self.pause_button.setText("Возобновить")
@@ -197,25 +206,31 @@ class RCSimulator(QMainWindow):
             self.plot_widget.canvas.flush_events()
             self.pause_button.setText("Пауза")
 
+
     def save_plot_to_png(self):
         if not hasattr(self.plot_widget, 'time') or not self.plot_widget.time.size:
             QMessageBox.warning(self, "Предупреждение", "Сначала запустите симуляцию.")
             return
         try:
             file_path, _ = QFileDialog.getSaveFileName(self, "Сохранить график", os.path.expanduser("~/rc_plot.png"), "PNG Files (*.png)")
+
             if file_path:
                 self.plot_widget.fig.savefig(file_path, dpi=300, bbox_inches='tight')
                 QMessageBox.information(self, "Успех", f"График сохранён в {file_path}")
         except Exception as e:
             QMessageBox.critical(self, "Ошибка", f"Ошибка при сохранении графика: {str(e)}")
 
+
     def get_csv_data(self):
         if not hasattr(self.calculator, 'time') or self.calculator.time is None:
             return None, "Сначала запустите симуляцию."
+
         try:
             precision = int(self.export_precision_input.text())
+
             if precision < 1 or precision > 12:
                 raise ValueError("Точность должна быть от 1 до 12")
+
             delimiter = ',' if self.csv_delimiter_combo.currentText() == "Запятая (,)" else '.'
 
             num_points = min(1000, len(self.calculator.time))
@@ -223,6 +238,7 @@ class RCSimulator(QMainWindow):
             logging.debug(f"CSV данные: num_points={num_points}, indices_len={len(indices)}")
 
             data = ['Время (с);Напряжение (В);Ток (А)']
+
             for idx in indices:
                 time_str = f"{self.calculator.time[idx]:.{precision}f}".rstrip('0').rstrip('.').replace('.', delimiter)
                 vc_str = f"{self.calculator.Vc[idx]:.{precision}f}".rstrip('0').rstrip('.').replace('.', delimiter)
@@ -235,25 +251,33 @@ class RCSimulator(QMainWindow):
         except Exception as e:
             return None, f"Ошибка: {str(e)}"
 
+
     def preview_csv(self):
         data, error = self.get_csv_data()
+
         if error:
             QMessageBox.critical(self, "Ошибка", error)
             return
+
         preview_dialog = PreviewDialog(data, self)
         preview_dialog.exec()
+
 
     def export_to_csv(self):
         if not hasattr(self.calculator, 'time') or self.calculator.time is None:
             QMessageBox.warning(self, "Предупреждение", "Сначала запустите симуляцию.")
             return
+
         try:
             precision = int(self.export_precision_input.text())
+
             if precision < 1 or precision > 12:
                 raise ValueError("Точность должна быть от 1 до 12")
+
             delimiter = ',' if self.csv_delimiter_combo.currentText() == "Запятая (,)" else '.'
 
             file_path, _ = QFileDialog.getSaveFileName(self, "Сохранить CSV", os.path.expanduser("~/rc_simulation.csv"), "CSV Files (*.csv)")
+
             if file_path:
                 num_points = min(1000, len(self.calculator.time))
                 indices = np.linspace(0, len(self.calculator.time)-1, num_points, dtype=int)
@@ -262,6 +286,7 @@ class RCSimulator(QMainWindow):
                 with open(file_path, 'w', newline='', encoding='utf-8') as f:
                     writer = csv.writer(f, delimiter=';')
                     writer.writerow(['Время (с)', 'Напряжение (В)', 'Ток (А)'])
+
                     for idx in indices:
                         time_str = f"{self.calculator.time[idx]:.{precision}f}".rstrip('0').rstrip('.').replace('.', delimiter)
                         vc_str = f"{self.calculator.Vc[idx]:.{precision}f}".rstrip('0').rstrip('.').replace('.', delimiter)
@@ -276,9 +301,11 @@ class RCSimulator(QMainWindow):
             logging.error(f"Ошибка при экспорте: {str(e)}")
             QMessageBox.critical(self, "Ошибка", f"Ошибка при экспорте: {str(e)}")
 
+
     def show_help(self):
         help_window = HelpWindow(self)
         help_window.exec()
+
 
     def update_table(self):
         params = [
@@ -292,8 +319,11 @@ class RCSimulator(QMainWindow):
             ("Тепловые потери (Вт)", f"{self.calculator.power_loss:.6f}"),
             ("Постоянная времени (с)", f"{self.calculator.tau:.6f}"),
         ]
+
         self.result_table.setRowCount(len(params))
+
         for row, (param, value) in enumerate(params):
             self.result_table.setItem(row, 0, QTableWidgetItem(param))
             self.result_table.setItem(row, 1, QTableWidgetItem(value))
+
         self.result_table.resizeColumnsToContents()

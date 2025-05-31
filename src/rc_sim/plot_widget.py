@@ -5,6 +5,7 @@ from matplotlib.animation import FuncAnimation
 import numpy as np
 import logging
 
+
 class PlotWidget(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -22,6 +23,7 @@ class PlotWidget(QWidget):
         self.I = []
         self.V0 = 10
 
+
     def setup_axes(self):
         self.ax1.set_title('Зарядка/Разрядка конденсатора')
         self.ax1.set_xlabel('Время (с)')
@@ -33,6 +35,7 @@ class PlotWidget(QWidget):
         self.ax1.grid(True)
         self.ax2.grid(True)
         self.fig.tight_layout()
+
 
     def update_plot(self, time, Vc, I, V0=10, animate=True, interval=50, circuit_diagram=None):
         try:
@@ -75,16 +78,20 @@ class PlotWidget(QWidget):
                     logging.debug("Инициализация анимации")
                     self.line1.set_data([], [])
                     self.line2.set_data([], [])
+
                     if circuit_diagram:
                         circuit_diagram.set_charge_level(0, self.V0)
+
                     return self.line1, self.line2
 
                 def update(frame):
                     logging.debug(f"Обновление кадра {frame}")
                     self.line1.set_data(self.time[:frame], self.Vc[:frame])
                     self.line2.set_data(self.time[:frame], self.I[:frame])
+
                     if circuit_diagram:
                         circuit_diagram.set_charge_level(self.Vc[frame-1] if frame > 0 else 0, self.V0)
+
                     self.canvas.flush_events()
                     return self.line1, self.line2
 
