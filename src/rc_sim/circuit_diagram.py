@@ -1,41 +1,97 @@
-from PyQt6.QtWidgets import QWidget
-from PyQt6.QtGui import QPainter, QPen, QBrush, QColor
-from PyQt6.QtCore import QRectF
-import numpy as np
+"""Module for displaying an RC circuit diagram with charge visualization."""
+
+from typing import Optional
+from PyQt6.QtWidgets import QWidget                     # pylint: disable=no-name-in-module
+from PyQt6.QtGui import QPainter, QPen, QBrush, QColor  # pylint: disable=no-name-in-module
+from PyQt6.QtCore import QRectF                         # pylint: disable=no-name-in-module
 
 
 class CircuitDiagram(QWidget):
-    def __init__(self, parent=None):
+    """Widget to display an RC circuit diagram with charge visualization."""
+    # Constants for diagram dimensions
+    DIAGRAM_WIDTH: int = 200
+    DIAGRAM_HEIGHT: int = 120
+    LINE_THICKNESS: int = 2
+    BATTERY_X: int = 10
+    BATTERY_Y: int = 50
+    BATTERY_WIDTH: int = 20
+    R_INT_X: int = 50
+    R_INT_WIDTH: int = 30
+    RESISTOR_X: int = 100
+    RESISTOR_WIDTH: int = 40
+    CAPACITOR_X: int = 160
+    CAPACITOR_WIDTH: int = 20
+    CHARGE_RECT_X: int = 170
+    CHARGE_RECT_WIDTH: int = 10
+    CHARGE_RECT_HEIGHT: int = 40
+    LABEL_OFFSET_Y: int = 20
+
+    def __init__(self, parent: Optional[QWidget] = None) -> None:
+        """Initialize the circuit diagram widget."""
         super().__init__(parent)
-        self.setFixedSize(200, 100)
-        self.charge_level = 0.0
+        self.setFixedSize(self.DIAGRAM_WIDTH, self.DIAGRAM_HEIGHT)
+        self.charge_level: float = 0.0
 
+    def set_charge_level(self, vc: float, v0: float) -> None:
+        """Set the charge level for visualization.
 
-    def set_charge_level(self, Vc, V0):
-        self.charge_level = Vc / V0 if V0 != 0 else 0.0
+        Args:
+            vc: Current voltage across the capacitor.
+            v0: Source EMF (electromotive force).
+        """
+        self.charge_level = vc / v0 if v0 != 0 else 0.0
         self.update()
 
+    def paintEvent(self, event: QPainter) -> None:  # pylint: disable=invalid-name,unused-argument
+        """Paint the RC circuit diagram.
 
-    def paintEvent(self, event):
+        Args:
+            event: The paint event triggering the redraw.
+        """
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
-        pen = QPen(QColor("#ffffff"), 2)
+        pen = QPen(QColor("#ffffff"), self.LINE_THICKNESS)
         painter.setPen(pen)
 
-        # Рисуем источник питания
-        painter.drawLine(10, 50, 30, 50)
-        painter.drawLine(20, 40, 20, 60)  # Батарея
+        # Draw power source (battery)
+        painter.drawLine(self.BATTERY_X, self.BATTERY_Y,
+                         self.BATTERY_X + self.BATTERY_WIDTH, self.BATTERY_Y)
+        painter.drawLine(self.BATTERY_X + self.BATTERY_WIDTH // 2,
+                         self.BATTERY_Y - 10,
+                         self.BATTERY_X + self.BATTERY_WIDTH // 2,
+                         self.BATTERY_Y + 10)
+        painter.drawText(self.BATTERY_X, self.BATTERY_Y - self.LABEL_OFFSET_Y, "E")
 
-        # Рисуем резистор
-        painter.drawLine(30, 50, 70, 50)
-        painter.drawRect(QRectF(70, 40, 40, 20))
+        # Draw internal resistance (R_int)
+        painter.drawLine(self.BATTERY_X + self.BATTERY_WIDTH, self.BATTERY_Y,
+                         self.R_INT_X, self.BATTERY_Y)
+        painter.drawRect(QRectF(self.R_INT_X, self.BATTERY_Y - 10,
+                               self.R_INT_WIDTH, 20))
+        painter.drawText(self.R_INT_X + 5, self.BATTERY_Y + self.LABEL_OFFSET_Y, "R_int")
 
-        # Рисуем конденсатор
-        painter.drawLine(110, 50, 130, 50)
-        painter.drawLine(130, 30, 130, 70)
-        painter.drawLine(150, 30, 150, 70)
-        painter.drawLine(150, 50, 190, 50)
+        # Draw resistor (R)
+        painter.drawLine(self.R_INT_X + self.R_INT_WIDTH, self.BATTERY_Y,
+                         self.RESISTOR_X, self.BATTERY_Y)
+        painter.drawRect(QRectF(self.RESISTOR_X, self.BATTERY_Y - 10,
+                               self.RESISTOR_WIDTH, 20))
+        painter.drawText(self.RESISTOR_X + 10, self.BATTERY_Y + self.LABEL_OFFSET_Y, "R")
 
-        # Визуализация заряда
+        # Draw capacitor (C)
+        painter.drawLine(self.RESISTOR_X + self.RESISTOR_WIDTH, self.BATTERY_Y,
+                         self.CAPACITOR_X, self.BATTERY_Y)
+        painter.drawLine(self.CAPACITOR_X, self.BATTERY_Y - 20,
+                         self.CAPACITOR_X, self.BATTERY_Y + 20)
+        painter.drawLine(self.CAPACITOR_X + self.CAPACITOR_WIDTH,
+                         self.BATTERY_Y - 20,
+                         self.CAPACITOR_X + self.CAPACITOR_WIDTH,
+                         self.BATTERY_Y + 20)
+        painter.drawLine(self.CAPACITOR_X + self.CAPACITOR_WIDTH, self.BATTERY_Y,
+                         self.DIAGRAM_WIDTH - 10, self.BATTERY_Y)
+        painter.drawText(self.CAPACITOR_X + self.CAPACITOR_WIDTH // 2,
+                         self.BATTERY_Y + self.LABEL_OFFSET_Y + 20, "C")
+
+        # Visualize charge level
         painter.setBrush(QBrush(QColor(255, 255, 0, int(255 * self.charge_level))))
-        painter.drawRect(QRectF(140, 30, 10, 40))
+        painter.drawRect(QRectF(self.CHARGE_RECT_X, self.BATTERY_Y - self.CHARGE_RECT_HEIGHT // 2,
+                               self.CHARGE_RECT_WIDTH, self.CHARGE_RECT_HEIGHT))
+        painter.end()
