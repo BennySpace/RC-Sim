@@ -25,11 +25,24 @@ class PlotWidget(QWidget):
 
 
     def setup_axes(self):
-        self.ax1.set_title('Зарядка/Разрядка конденсатора')
-        self.ax1.set_xlabel('Время (с)')
-        self.ax1.set_ylabel('Напряжение (В)')
-        self.ax2.set_xlabel('Время (с)')
-        self.ax2.set_ylabel('Ток (А)')
+        self.fig.patch.set_facecolor("#1e1e1e")
+        self.ax1.set_facecolor("#1e1e1e")
+        self.ax2.set_facecolor("#1e1e1e")
+        self.ax1.set_xlabel('Время (с)', color="white")
+        self.ax1.set_ylabel('Напряжение (В)', color="white")
+        self.ax2.set_xlabel('Время (с)', color="white")
+        self.ax2.set_ylabel('Ток (А)', color="white")
+        # Цвет осей и текста
+        for ax in [self.ax1, self.ax2]:
+            ax.tick_params(colors='white')  # цвет делений
+            ax.yaxis.label.set_color('white')  # цвет подписей
+            ax.xaxis.label.set_color('white')
+            ax.title.set_color('white')  # цвет заголовка
+            ax.spines['bottom'].set_color('white')  # рамки
+            ax.spines['top'].set_color('white')
+            ax.spines['left'].set_color('white')
+            ax.spines['right'].set_color('white')
+
         self.ax1.legend()
         self.ax2.legend()
         self.ax1.grid(True)
@@ -58,8 +71,8 @@ class PlotWidget(QWidget):
 
             self.ax1.clear()
             self.ax2.clear()
-            self.line1, = self.ax1.plot([], [], label='Напряжение (В)', color='blue')
-            self.line2, = self.ax2.plot([], [], label='Ток (А)', color='red')
+            self.line1, = self.ax1.plot([], [], label='Напряжение (В)', color='#00bfff')
+            self.line2, = self.ax2.plot([], [], label='Ток (А)', color='#ffa500')
             self.setup_axes()
 
             self.line1.set_data(self.time, self.Vc)

@@ -100,6 +100,7 @@ class RCSimulator(QMainWindow):  # pylint: disable=too-many-instance-attributes
         self.is_animation_paused: bool = False
         self.setup_ui()
 
+
     def setup_ui(self) -> None:
         """Set up the UI for the main window."""
         central_widget = QWidget()
