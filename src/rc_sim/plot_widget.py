@@ -32,13 +32,12 @@ class PlotWidget(QWidget):
         self.ax1.set_ylabel('Напряжение (В)', color="white")
         self.ax2.set_xlabel('Время (с)', color="white")
         self.ax2.set_ylabel('Ток (А)', color="white")
-        # Цвет осей и текста
         for ax in [self.ax1, self.ax2]:
-            ax.tick_params(colors='white')  # цвет делений
-            ax.yaxis.label.set_color('white')  # цвет подписей
+            ax.tick_params(colors='white')
+            ax.yaxis.label.set_color('white')
             ax.xaxis.label.set_color('white')
-            ax.title.set_color('white')  # цвет заголовка
-            ax.spines['bottom'].set_color('white')  # рамки
+            ax.title.set_color('white')
+            ax.spines['bottom'].set_color('white')
             ax.spines['top'].set_color('white')
             ax.spines['left'].set_color('white')
             ax.spines['right'].set_color('white')
