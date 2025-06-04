@@ -1,22 +1,28 @@
 """Module for simulating an RC circuit with a GUI interface."""
 
-from typing import Optional, Tuple
 import csv
 import logging
 import os
-import numpy as np
+from typing import Optional, Tuple
+
 # pylint: disable=no-name-in-module
+import numpy as np
+from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import (
     QMainWindow, QWidget, QHBoxLayout, QVBoxLayout, QFormLayout, QLineEdit,
     QComboBox, QPushButton, QTableWidget, QTableWidgetItem, QMessageBox,
     QFileDialog, QSlider, QLabel, QDialog, QTextEdit
 )
-from PyQt6.QtCore import Qt
+
 # pylint: disable=import-error
-from rc_calculator import RCCalculator
-from plot_widget import PlotWidget
-from circuit_diagram import CircuitDiagram
-from help_window import HelpWindow
+from src.rc_sim.circuit_diagram import CircuitDiagram
+from src.rc_sim.help_window import HelpWindow
+from src.rc_sim.plot_widget import PlotWidget
+from src.rc_sim.rc_calculator import RCCalculator
+
+
+# pylint: disable=import-error
 
 
 class PreviewDialog(QDialog):  # pylint: disable=too-few-public-methods
@@ -37,6 +43,7 @@ class PreviewDialog(QDialog):  # pylint: disable=too-few-public-methods
         """
         super().__init__(parent)
         self.setWindowTitle("Предварительный просмотр CSV")
+        # pylint: disable=duplicate-code
         self.setGeometry(self.DIALOG_X, self.DIALOG_Y,
                          self.DIALOG_WIDTH, self.DIALOG_HEIGHT)
         layout = QVBoxLayout(self)
@@ -92,6 +99,12 @@ class RCSimulator(QMainWindow):  # pylint: disable=too-many-instance-attributes
         """Initialize the RC simulator window."""
         super().__init__()
         self.setWindowTitle("RC-Sim: Симуляция RC-цепи")
+        icon_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), '..', 'assets',
+                                 'app.ico')  # pylint: disable=line-too-long
+        if os.path.exists(icon_path):
+            self.setWindowIcon(QIcon(icon_path))
+        else:
+            logging.warning(f"Icon file not found: {icon_path}")  # pylint:disable=logging-fstring-interpolation
         self.setGeometry(self.WINDOW_X, self.WINDOW_Y,
                          self.WINDOW_WIDTH, self.WINDOW_HEIGHT)
         self.calculator = RCCalculator()
@@ -99,7 +112,6 @@ class RCSimulator(QMainWindow):  # pylint: disable=too-many-instance-attributes
         self.circuit_diagram = CircuitDiagram()
         self.is_animation_paused: bool = False
         self.setup_ui()
-
 
     def setup_ui(self) -> None:
         """Set up the UI for the main window."""
@@ -120,18 +132,22 @@ class RCSimulator(QMainWindow):  # pylint: disable=too-many-instance-attributes
     def setup_form_layout(self, input_layout: QVBoxLayout) -> None:
         """Set up the form layout for input fields."""
         form_layout = QFormLayout()
-        self.capacitance_input = QLineEdit(self.DEFAULT_CAPACITANCE)                    # pylint: disable=attribute-defined-outside-init
-        self.resistance_input = QLineEdit(self.DEFAULT_RESISTANCE)                      # pylint: disable=attribute-defined-outside-init
-        self.voltage_input = QLineEdit(self.DEFAULT_EMF)                                # pylint: disable=attribute-defined-outside-init
-        self.internal_resistance_input = QLineEdit(self.DEFAULT_INTERNAL_RESISTANCE)    # pylint: disable=attribute-defined-outside-init
-        self.source_combo = QComboBox()                                                 # pylint: disable=attribute-defined-outside-init
+        self.capacitance_input = QLineEdit(self.DEFAULT_CAPACITANCE)  # pylint: disable=attribute-defined-outside-init
+        self.resistance_input = QLineEdit(self.DEFAULT_RESISTANCE)  # pylint: disable=attribute-defined-outside-init
+        self.voltage_input = QLineEdit(self.DEFAULT_EMF)  # pylint: disable=attribute-defined-outside-init
+        # pylint: disable=attribute-defined-outside-init
+        self.internal_resistance_input = QLineEdit(
+            self.DEFAULT_INTERNAL_RESISTANCE)
+        self.source_combo = QComboBox()  # pylint: disable=attribute-defined-outside-init
         self.source_combo.addItems(["DC", "AC"])
-        self.mode_combo = QComboBox()                                                   # pylint: disable=attribute-defined-outside-init
+        self.mode_combo = QComboBox()  # pylint: disable=attribute-defined-outside-init
         self.mode_combo.addItems(["Зарядка", "Разрядка"])
-        self.temp_coeff_input = QLineEdit(self.DEFAULT_TEMP_COEFF)                      # pylint: disable=attribute-defined-outside-init
-        self.temperature_input = QLineEdit(self.DEFAULT_TEMPERATURE)                    # pylint: disable=attribute-defined-outside-init
-        self.export_precision_input = QLineEdit(self.DEFAULT_PRECISION)                 # pylint: disable=attribute-defined-outside-init
-        self.csv_delimiter_combo = QComboBox()                                          # pylint: disable=attribute-defined-outside-init
+        self.temp_coeff_input = QLineEdit(self.DEFAULT_TEMP_COEFF)  # pylint: disable=attribute-defined-outside-init
+        # pylint: disable=attribute-defined-outside-init
+        self.temperature_input = QLineEdit(self.DEFAULT_TEMPERATURE)
+        self.export_precision_input = QLineEdit(
+            self.DEFAULT_PRECISION)  # pylint: disable=attribute-defined-outside-init
+        self.csv_delimiter_combo = QComboBox()  # pylint: disable=attribute-defined-outside-init
         self.csv_delimiter_combo.addItems(["Точка (.)", "Запятая (,)"])
 
         for input_field in (
@@ -143,7 +159,8 @@ class RCSimulator(QMainWindow):  # pylint: disable=too-many-instance-attributes
                 self.temperature_input,
                 self.export_precision_input,
         ):
-            input_field.textChanged.connect(lambda text, field=input_field: self.validate_input_field(field))   # pylint: disable=line-too-long
+            input_field.textChanged.connect(
+                lambda text, field=input_field: self.validate_input_field(field))  # pylint: disable=line-too-long
 
         form_layout.addRow("Ёмкость (мкФ):", self.capacitance_input)
         form_layout.addRow("Сопротивление (Ом):", self.resistance_input)
@@ -154,10 +171,15 @@ class RCSimulator(QMainWindow):  # pylint: disable=too-many-instance-attributes
         form_layout.addRow("Температурный коэффициент (1/°C):", self.temp_coeff_input)
         form_layout.addRow("Температура (°C):", self.temperature_input)
         form_layout.addRow("Точность экспорта (знаков):", self.export_precision_input)
+        # pylint: disable=attribute-defined-outside-init
         form_layout.addRow("Десятичный разделитель:", self.csv_delimiter_combo)
 
-        self.animation_speed_label = QLabel(f"Скорость анимации (мс): {self.SLIDER_DEFAULT}")    # pylint: disable=attribute-defined-outside-init
-        self.animation_speed_slider = QSlider(Qt.Orientation.Horizontal)                         # pylint: disable=attribute-defined-outside-init
+        # pylint: disable=attribute-defined-outside-init
+        self.animation_speed_label = QLabel(
+            f"Скорость анимации (мс): {self.SLIDER_DEFAULT}")
+        # pylint: disable=attribute-defined-outside-init
+        self.animation_speed_slider = QSlider(
+            Qt.Orientation.Horizontal)
         self.animation_speed_slider.setMinimum(self.SLIDER_MIN)
         self.animation_speed_slider.setMaximum(self.SLIDER_MAX)
         self.animation_speed_slider.setValue(self.SLIDER_DEFAULT)
@@ -174,7 +196,7 @@ class RCSimulator(QMainWindow):  # pylint: disable=too-many-instance-attributes
         run_button.clicked.connect(self.run_simulation)
         input_layout.addWidget(run_button)
 
-        self.pause_button = QPushButton("Пауза")    # pylint: disable=attribute-defined-outside-init
+        self.pause_button = QPushButton("Пауза")  # pylint: disable=attribute-defined-outside-init
         self.pause_button.clicked.connect(self.toggle_animation)
         input_layout.addWidget(self.pause_button)
 
@@ -202,7 +224,7 @@ class RCSimulator(QMainWindow):  # pylint: disable=too-many-instance-attributes
 
     def setup_result_table(self, input_layout: QVBoxLayout) -> None:
         """Set up the result table."""
-        self.result_table = QTableWidget()    # pylint: disable=attribute-defined-outside-init
+        self.result_table = QTableWidget()  # pylint: disable=attribute-defined-outside-init
         self.result_table.setRowCount(self.TABLE_ROWS)
         self.result_table.setColumnCount(self.TABLE_COLUMNS)
         self.result_table.setHorizontalHeaderLabels(["Параметр", "Значение"])
@@ -245,7 +267,7 @@ class RCSimulator(QMainWindow):  # pylint: disable=too-many-instance-attributes
             return
 
         if not self.calculator.set_parameters(
-            capacitance, resistance, emf, source_type, alpha, temperature, internal_resistance
+                capacitance, resistance, emf, source_type, alpha, temperature, internal_resistance
         ):
             QMessageBox.critical(
                 self, "Ошибка",
@@ -330,7 +352,8 @@ class RCSimulator(QMainWindow):  # pylint: disable=too-many-instance-attributes
             precision = int(self.export_precision_input.text())
 
             if precision < self.PRECISION_MIN or precision > self.PRECISION_MAX:
-                raise ValueError(f"Точность должна быть от {self.PRECISION_MIN} до {self.PRECISION_MAX}")   # pylint: disable=line-too-long
+                raise ValueError(
+                    f"Точность должна быть от {self.PRECISION_MIN} до {self.PRECISION_MAX}")  # pylint: disable=line-too-long
 
             delimiter = ',' if self.csv_delimiter_combo.currentText() == "Запятая (,)" else '.'
 
@@ -379,7 +402,8 @@ class RCSimulator(QMainWindow):  # pylint: disable=too-many-instance-attributes
             precision = int(self.export_precision_input.text())
 
             if precision < self.PRECISION_MIN or precision > self.PRECISION_MAX:
-                raise ValueError(f"Точность должна быть от {self.PRECISION_MIN} до {self.PRECISION_MAX}")   # pylint: disable=line-too-long
+                raise ValueError(
+                    f"Точность должна быть от {self.PRECISION_MIN} до {self.PRECISION_MAX}")  # pylint: disable=line-too-long
 
             delimiter = ',' if self.csv_delimiter_combo.currentText() == "Запятая (,)" else '.'
 

@@ -2,10 +2,11 @@
 
 import logging
 from typing import Optional
+
 import numpy as np
 
 
-class RCCalculator: # pylint: disable=too-many-instance-attributes
+class RCCalculator:  # pylint: disable=too-many-instance-attributes
     """Class to calculate RC circuit parameters including EMF and internal resistance."""
     # Constants for default values and calculations
     DEFAULT_CAPACITANCE: float = 1e-6  # Farads
@@ -23,16 +24,16 @@ class RCCalculator: # pylint: disable=too-many-instance-attributes
 
     def __init__(self) -> None:
         """Initialize the RC calculator with default parameters."""
-        self.C: float = self.DEFAULT_CAPACITANCE                # pylint: disable=invalid-name
-        self.R: float = self.DEFAULT_RESISTANCE                 # pylint: disable=invalid-name
-        self.V0: float = self.DEFAULT_EMF                       # pylint: disable=invalid-name
-        self.R_int: float = self.DEFAULT_INTERNAL_RESISTANCE    # pylint: disable=invalid-name
+        self.C: float = self.DEFAULT_CAPACITANCE  # pylint: disable=invalid-name
+        self.R: float = self.DEFAULT_RESISTANCE  # pylint: disable=invalid-name
+        self.V0: float = self.DEFAULT_EMF  # pylint: disable=invalid-name
+        self.R_int: float = self.DEFAULT_INTERNAL_RESISTANCE  # pylint: disable=invalid-name
         self.source_type: str = 'DC'
         self.alpha: float = self.DEFAULT_TEMP_COEFF
         self.temperature: float = self.DEFAULT_TEMPERATURE
         self.time: Optional[np.ndarray] = None
-        self.Vc: Optional[np.ndarray] = None                    # pylint: disable=invalid-name
-        self.I: Optional[np.ndarray] = None                     # pylint: disable=invalid-name
+        self.Vc: Optional[np.ndarray] = None  # pylint: disable=invalid-name
+        self.I: Optional[np.ndarray] = None  # pylint: disable=invalid-name
         self.energy: float = 0
         self.power_loss: float = 0
         self.tau: float = 0
@@ -44,15 +45,15 @@ class RCCalculator: # pylint: disable=too-many-instance-attributes
             handlers=[logging.StreamHandler()]
         )
 
-    def set_parameters( # pylint: disable=too-many-arguments,too-many-positional-arguments
-        self,
-        C: float,                                   # pylint: disable=invalid-name
-        R: float,                                   # pylint: disable=invalid-name
-        V0: float,                                  # pylint: disable=invalid-name
-        source_type: str,
-        alpha: float,
-        temperature: float,
-        R_int: float = DEFAULT_INTERNAL_RESISTANCE  # pylint: disable=invalid-name
+    def set_parameters(  # pylint: disable=too-many-arguments,too-many-positional-arguments
+            self,
+            C: float,  # pylint: disable=invalid-name
+            R: float,  # pylint: disable=invalid-name
+            V0: float,  # pylint: disable=invalid-name
+            source_type: str,
+            alpha: float,
+            temperature: float,
+            R_int: float = DEFAULT_INTERNAL_RESISTANCE  # pylint: disable=invalid-name
     ) -> bool:
         """Set RC circuit parameters and validate them.
 
@@ -95,12 +96,14 @@ class RCCalculator: # pylint: disable=too-many-instance-attributes
         Returns:
             True if calculations succeed, False otherwise.
         """
+        # pylint: disable=line-too-long,invalid-name
         try:
-            R_temp = self.R * (1 + self.alpha * (self.temperature - self.REFERENCE_TEMPERATURE)) + self.R_int  # pylint: disable=line-too-long,invalid-name
+            R_temp = self.R * (1 + self.alpha * (
+                        self.temperature - self.REFERENCE_TEMPERATURE)) + self.R_int
             self.tau = R_temp * self.C
 
             if self.tau <= 0 or not np.isfinite(self.tau):
-                logging.error(f"Invalid time constant: tau={self.tau}") # pylint: disable=logging-fstring-interpolation
+                logging.error(f"Invalid time constant: tau={self.tau}")  # pylint: disable=logging-fstring-interpolation
                 return False
 
             t_max = self.TAU_MULTIPLIER * self.tau
@@ -109,27 +112,30 @@ class RCCalculator: # pylint: disable=too-many-instance-attributes
 
             if self.source_type == 'DC':
                 if discharge:
-                    self.Vc = self.V0 * np.exp(-self.time / self.tau)   # pylint: disable=invalid-unary-operand-type
-                    self.I = -(self.V0 / R_temp) * np.exp(-self.time / self.tau)    # pylint: disable=invalid-unary-operand-type
+                    self.Vc = self.V0 * np.exp(-self.time / self.tau)  # pylint: disable=invalid-unary-operand-type
+                    self.I = -(self.V0 / R_temp) * np.exp(
+                        -self.time / self.tau)  # pylint: disable=invalid-unary-operand-type
                 else:
-                    self.Vc = self.V0 * (1 - np.exp(-self.time / self.tau)) # pylint: disable=invalid-unary-operand-type
-                    self.I = (self.V0 / R_temp) * np.exp(-self.time / self.tau) # pylint: disable=invalid-unary-operand-type
+                    self.Vc = self.V0 * (
+                                1 - np.exp(-self.time / self.tau))  # pylint: disable=invalid-unary-operand-type
+                    self.I = (self.V0 / R_temp) * np.exp(
+                        -self.time / self.tau)  # pylint: disable=invalid-unary-operand-type
                 self.phase_shift = 0
             else:
                 omega = self.PI * self.AC_FREQUENCY
-                Z = np.sqrt(R_temp**2 + (1 / (omega * self.C))**2)  # pylint: disable=invalid-name
+                Z = np.sqrt(R_temp ** 2 + (1 / (omega * self.C)) ** 2)  # pylint: disable=invalid-name
                 self.Vc = (
-                    self.V0 * np.sin(omega * self.time) /
-                    np.sqrt(1 + (omega * R_temp * self.C)**2)
+                        self.V0 * np.sin(omega * self.time) /
+                        np.sqrt(1 + (omega * R_temp * self.C) ** 2)
                 )
                 self.I = (
-                    (self.V0 / Z) *
-                    np.sin(omega * self.time - np.arctan(1 / (omega * R_temp * self.C)))
+                        (self.V0 / Z) *
+                        np.sin(omega * self.time - np.arctan(1 / (omega * R_temp * self.C)))
                 )
                 self.phase_shift = np.arctan(1 / (omega * R_temp * self.C))
 
-            self.energy = self.ENERGY_COEFF * self.C * self.Vc[-1]**2
-            self.power_loss = np.mean(self.I**2 * R_temp)
+            self.energy = self.ENERGY_COEFF * self.C * self.Vc[-1] ** 2
+            self.power_loss = np.mean(self.I ** 2 * R_temp)
 
             if not all(np.isfinite(arr).all() for arr in [self.time, self.Vc, self.I]):
                 logging.error("Results contain non-numeric values")
@@ -145,5 +151,5 @@ class RCCalculator: # pylint: disable=too-many-instance-attributes
             )
             return True
         except ValueError as e:
-            logging.error(f"Calculation error: {str(e)}")   # pylint: disable=logging-fstring-interpolation
+            logging.error(f"Calculation error: {str(e)}")  # pylint: disable=logging-fstring-interpolation
             return False

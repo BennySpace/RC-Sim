@@ -1,14 +1,16 @@
 """Module for displaying a help window with RC circuit information and equations."""
 
+import logging
 import os
 import tempfile
 import uuid
 from typing import Optional
-import matplotlib.pyplot as plt
+
 # pylint: disable=no-name-in-module
-from PyQt6.QtWidgets import QDialog, QVBoxLayout, QLabel, QScrollArea, QWidget, QPushButton
-from PyQt6.QtGui import QPixmap
+import matplotlib.pyplot as plt
 from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QPixmap, QIcon
+from PyQt6.QtWidgets import QDialog, QVBoxLayout, QLabel, QScrollArea, QWidget, QPushButton
 
 
 class HelpWindow(QDialog):
@@ -68,6 +70,13 @@ class HelpWindow(QDialog):
     def __init__(self, parent: Optional[QDialog] = None) -> None:
         super().__init__(parent)
         self.setWindowTitle("Справка: RC-цепь")
+        # pylint: disable=duplicate-code
+        icon_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), '..', 'assets',
+                                 'help.ico')  # pylint: disable=line-too-long
+        if os.path.exists(icon_path):
+            self.setWindowIcon(QIcon(icon_path))
+        else:
+            logging.warning(f"Icon file not found: {icon_path}")  # pylint:disable=logging-fstring-interpolation
         self.setGeometry(self.WINDOW_X, self.WINDOW_Y,
                          self.WINDOW_WIDTH, self.WINDOW_HEIGHT)
         self.temp_files: list[str] = []
@@ -120,17 +129,20 @@ class HelpWindow(QDialog):
             (
                 r"V_C(t) = E e^{-t / \tau}",
                 "Напряжение на конденсаторе (разрядка)",
-                "V_C: напряжение на конденсаторе, E: начальное напряжение, t: время, τ: постоянная времени."  # pylint: disable=line-too-long
+                # pylint: disable=line-too-long
+                "V_C: напряжение на конденсаторе, E: начальное напряжение, t: время, τ: постоянная времени."
             ),
             (
                 r"I(t) = \frac{E}{R + R_{\text{int}}} e^{-t / \tau}",
                 "Ток (зарядка)",
-                "I: ток, E: ЭДС, R: сопротивление, R_int: внутреннее сопротивление, t: время, τ: постоянная времени."  # pylint: disable=line-too-long
+                # pylint: disable=line-too-long
+                "I: ток, E: ЭДС, R: сопротивление, R_int: внутреннее сопротивление, t: время, τ: постоянная времени."
             ),
             (
                 r"\tau = (R + R_{\text{int}}) \cdot C",
                 "Постоянная времени",
-                "τ: постоянная времени, R: сопротивление, R_int: внутреннее сопротивление, C: ёмкость."  # pylint: disable=line-too-long
+                # pylint: disable=line-too-long
+                "τ: постоянная времени, R: сопротивление, R_int: внутреннее сопротивление, C: ёмкость."
             )
         ]
 
@@ -148,7 +160,8 @@ class HelpWindow(QDialog):
             (
                 r"Z = \sqrt{(R + R_{\text{int}})^2 + \frac{1}{(\omega C)^2}}",
                 "Импеданс",
-                "Z: импеданс, R: сопротивление, R_int: внутреннее сопротивление, ω: угловая частота, C: ёмкость."  # pylint: disable=line-too-long
+                # pylint: disable=line-too-long
+                "Z: импеданс, R: сопротивление, R_int: внутреннее сопротивление, ω: угловая частота, C: ёмкость."
             ),
             (
                 r"V_C(t) = \frac{E \sin(\omega t)}{\sqrt{1 + (\omega (R + R_{\text{int}}) C)^2}}",
@@ -157,7 +170,8 @@ class HelpWindow(QDialog):
                 "R: сопротивление, R_int: внутреннее сопротивление, C: ёмкость."
             ),
             (
-                r"I(t) = \frac{E}{Z} \sin\left(\omega t - \arctan\left(\frac{1}{\omega (R + R_{\text{int}}) C}\right)\right)",  # pylint: disable=line-too-long
+                # pylint: disable=line-too-long
+                r"I(t) = \frac{E}{Z} \sin\left(\omega t - \arctan\left(\frac{1}{\omega (R + R_{\text{int}}) C}\right)\right)",
                 "Ток",
                 "I: ток, E: амплитуда ЭДС, Z: импеданс, ω: угловая частота, t: время, "
                 "R: сопротивление, R_int: внутреннее сопротивление, C: ёмкость."
@@ -203,7 +217,8 @@ class HelpWindow(QDialog):
         """
         temp_file = os.path.join(tempfile.gettempdir(), f"formula_{uuid.uuid4()}.png")
         plt.figure(figsize=(self.FIGURE_WIDTH, self.FIGURE_HEIGHT), dpi=self.FIGURE_DPI)
-        plt.text(0.5, 0.5, f"${formula}$", fontsize=self.FONT_SIZE, ha='center', va='center', color='#4D8CFF')  # pylint: disable=line-too-long
+        plt.text(0.5, 0.5, f"${formula}$", fontsize=self.FONT_SIZE, ha='center', va='center',
+                 color='#4D8CFF')  # pylint: disable=line-too-long
         plt.axis('off')
         plt.savefig(temp_file, bbox_inches='tight', transparent=True, pad_inches=self.FIGURE_PAD)
         plt.close()

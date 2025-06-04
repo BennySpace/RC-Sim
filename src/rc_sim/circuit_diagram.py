@@ -8,9 +8,12 @@ current flow and charge level indicators.
 
 # pylint: disable=no-name-in-module
 from typing import Optional
-from PyQt6.QtWidgets import QWidget
-from PyQt6.QtGui import QPainter, QPen, QBrush, QColor, QFont, QPolygonF
+
 from PyQt6.QtCore import QRectF, QTimer, QPointF
+from PyQt6.QtGui import QPainter, QPen, QBrush, QColor, QFont, QPolygonF
+from PyQt6.QtWidgets import QWidget
+
+
 # pylint: enable=no-name-in-module
 
 
@@ -122,6 +125,7 @@ class CircuitDiagram(QWidget):
         self.draw_current_arrow(painter)
 
         painter.end()
+
     # pylint: enable=invalid-name, unused-argument
 
     def draw_current_arrow(self, painter: QPainter) -> None:

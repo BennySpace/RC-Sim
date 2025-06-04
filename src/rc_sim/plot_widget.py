@@ -1,11 +1,12 @@
 """Module for displaying voltage and current plots for RC circuit simulation."""
 
 import logging
-from PyQt6.QtWidgets import QWidget, QVBoxLayout  # pylint: disable=no-name-in-module
+
 import matplotlib.pyplot as plt
-from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
-from matplotlib.animation import FuncAnimation
 import numpy as np
+from PyQt6.QtWidgets import QWidget, QVBoxLayout  # pylint: disable=no-name-in-module
+from matplotlib.animation import FuncAnimation
+from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
 
 
 class PlotWidget(QWidget):  # pylint: disable=too-many-instance-attributes
@@ -28,9 +29,9 @@ class PlotWidget(QWidget):  # pylint: disable=too-many-instance-attributes
         self.setup_axes()
         self.anim = None
         self.time = []
-        self.Vc = []    # pylint: disable=invalid-name
-        self.I = []     # pylint: disable=invalid-name
-        self.V0 = 10    # pylint: disable=invalid-name
+        self.Vc = []  # pylint: disable=invalid-name
+        self.I = []  # pylint: disable=invalid-name
+        self.V0 = 10  # pylint: disable=invalid-name
 
     def setup_axes(self):
         """Configure the appearance and settings of the plot axes."""
@@ -57,7 +58,9 @@ class PlotWidget(QWidget):  # pylint: disable=too-many-instance-attributes
         self.ax2.grid(True)
         self.fig.tight_layout()
 
-    def update_plot(self, time, Vc, I, V0=10, animate=True, interval=50, circuit_diagram=None): # pylint: disable=invalid-name,too-many-arguments,too-many-positional-arguments,too-many-locals,too-many-statements
+    # pylint: disable=invalid-name,too-many-arguments,too-many-positional-arguments,too-many-locals,too-many-statements
+    def update_plot(self, time, Vc, I, V0=10, animate=True, interval=50,
+                    circuit_diagram=None):
         """Update the plot with voltage and current data, optionally animating.
 
         Args:
@@ -76,7 +79,8 @@ class PlotWidget(QWidget):  # pylint: disable=too-many-instance-attributes
             RuntimeError: If matplotlib operations (e.g., animation or rendering) fail.
         """
         try:
-            if not all(isinstance(arr, (list, np.ndarray)) and len(arr) > 0 for arr in [time, Vc, I]):  # pylint: disable=line-too-long
+            if not all(isinstance(arr, (list, np.ndarray)) and len(arr) > 0 for arr in
+                       [time, Vc, I]):  # pylint: disable=line-too-long
                 raise ValueError("Входные данные пусты или некорректны")
             if not all(np.isfinite(arr).all() for arr in [time, Vc, I]):
                 raise ValueError("Данные содержат нечисловые значения")
@@ -129,7 +133,8 @@ class PlotWidget(QWidget):  # pylint: disable=too-many-instance-attributes
                     self.line2.set_data(self.time[:frame], self.I[:frame])
 
                     if circuit_diagram:
-                        circuit_diagram.set_charge_level(self.Vc[frame-1] if frame > 0 else 0, self.V0) # pylint: disable=line-too-long
+                        circuit_diagram.set_charge_level(self.Vc[frame - 1] if frame > 0 else 0,
+                                                         self.V0)  # pylint: disable=line-too-long
 
                     self.canvas.flush_events()
                     return self.line1, self.line2
