@@ -33,7 +33,7 @@ def build_exe() -> None:
         raise FileNotFoundError(f"Папка assets не найдена по пути: {assets_dir}")
 
     # Check existence of required icons
-    required_icons = ['app.ico', 'help.ico', 'favicon.ico']
+    required_icons = ['app.ico', 'help.ico']
     for icon in required_icons:
         icon_path = os.path.join(assets_dir, icon)
         if not os.path.exists(icon_path):

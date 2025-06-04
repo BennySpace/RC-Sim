@@ -8,8 +8,6 @@ current flow and charge level indicators.
 
 # pylint: disable=no-name-in-module
 from typing import Optional
-from math import sin, pi
-from time import time
 from PyQt6.QtWidgets import QWidget
 from PyQt6.QtGui import QPainter, QPen, QBrush, QColor, QFont, QPolygonF
 from PyQt6.QtCore import QRectF, QTimer, QPointF, Qt
@@ -50,7 +48,7 @@ class CircuitDiagram(QWidget):
         self.arrow_timer.timeout.connect(self.update_arrow_position)
         self.is_animation_running = False
         self.is_discharging = False
-        self.is_DC = False
+        self.is_DC = False  # pylint: disable=invalid-name
         self.arrow_direction = 1
 
     def set_charge_level(self, vc: float, v0: float) -> None:

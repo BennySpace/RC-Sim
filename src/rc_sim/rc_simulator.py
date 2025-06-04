@@ -22,13 +22,6 @@ from src.rc_sim.plot_widget import PlotWidget
 from src.rc_sim.rc_calculator import RCCalculator
 
 
-# pylint: disable=import-error
-from rc_calculator import RCCalculator
-from plot_widget import PlotWidget
-from circuit_diagram import CircuitDiagram
-from help_window import HelpWindow
-
-
 class PreviewDialog(QDialog):  # pylint: disable=too-few-public-methods
     """Dialog for previewing CSV data."""
 
@@ -281,8 +274,8 @@ class RCSimulator(QMainWindow):  # pylint: disable=too-many-instance-attributes
         if self.calculator.calculate(time_step=self.TIME_STEP, discharge=discharge):
             self.update_table()
             interval = self.animation_speed_slider.value()
-            self.circuit_diagram.is_discharging = (self.mode_combo.currentText() == "Разрядка")
-            self.circuit_diagram.is_DC = (self.source_combo.currentText() == "DC")
+            self.circuit_diagram.is_discharging = (self.mode_combo.currentText() == "Разрядка") # pylint: disable=superfluous-parens
+            self.circuit_diagram.is_DC = (self.source_combo.currentText() == "DC")  # pylint: disable=superfluous-parens
             self.circuit_diagram.start_animation()
             self.plot_widget.update_plot(
                 self.calculator.time,
@@ -464,4 +457,3 @@ class RCSimulator(QMainWindow):  # pylint: disable=too-many-instance-attributes
             self.result_table.setItem(row, 0, QTableWidgetItem(param))
             self.result_table.setItem(row, 1, QTableWidgetItem(value))
         self.result_table.resizeColumnsToContents()
-
