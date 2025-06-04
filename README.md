@@ -10,10 +10,12 @@
 
 Developed by **Daniil Vlasov** and **Alisa Yusupova** (Group P3213) under the supervision of **Nikolay Khvastunov**, Associate Professor and Candidate of Physical and Mathematical Sciences.
 
-## Features
+## Screenshots
 
 ![image](https://github.com/user-attachments/assets/0c37c88f-3944-4e43-8312-602ec961785d)
 ![image](https://github.com/user-attachments/assets/6c0d78a8-9f85-4f50-9b22-b77307866d8a)
+
+## Features
 
 - **Interactive GUI**: Configure circuit parameters such as capacitance (µF), resistance (Ω), EMF (V), internal resistance (Ω), temperature (°C), and temperature coefficient (1/°C).
 - **DC and AC Support**: Simulate circuits with constant (DC) or alternating (AC, 50 Hz) sources.
