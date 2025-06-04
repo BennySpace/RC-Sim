@@ -1,7 +1,9 @@
 from typing import Optional
+from math import sin, pi
+from time import time
 from PyQt6.QtWidgets import QWidget
 from PyQt6.QtGui import QPainter, QPen, QBrush, QColor, QFont, QPolygonF
-from PyQt6.QtCore import QRectF, QTimer, QPointF
+from PyQt6.QtCore import QRectF, QTimer, QPointF, Qt
 
 
 class CircuitDiagram(QWidget):
@@ -34,24 +36,46 @@ class CircuitDiagram(QWidget):
         super().__init__(parent)
         self.setFixedSize(self.DIAGRAM_WIDTH, self.DIAGRAM_HEIGHT)
         self.charge_level: float = 0.0
-
-        self.current_arrow_pos = self.BATTERY_X + self.BATTERY_WIDTH + 5  # начальная позиция стрелки
+        self.current_arrow_pos = self.BATTERY_X + self.BATTERY_WIDTH + 5
         self.arrow_timer = QTimer(self)
         self.arrow_timer.timeout.connect(self.update_arrow_position)
-        self.arrow_timer.start(100)  # обновление каждые 100 мс
+        self.is_animation_running = False
+        self.is_discharging = False
+        self.is_DC = False
+        self.arrow_direction = 1
 
     def set_charge_level(self, vc: float, v0: float) -> None:
         """Set the charge level for visualization."""
         self.charge_level = vc / v0 if v0 != 0 else 0.0
         self.update()
 
+    def start_animation(self) -> None:
+        """Start current animation."""
+        self.is_animation_running = True
+        self.arrow_timer.start(50)
+
+    def stop_animation(self) -> None:
+        """Stop current animation and reset arrow position."""
+        self.is_animation_running = False
+        self.arrow_timer.stop()
+        self.current_arrow_pos = self.BATTERY_X + self.BATTERY_WIDTH + 5
+        self.update()
+
     def update_arrow_position(self) -> None:
-        """Update position of current arrow and repaint."""
-        end_pos = self.CAPACITOR_X + self.CAPACITOR_WIDTH
-        if self.current_arrow_pos < end_pos:
-            self.current_arrow_pos += 5
+        """Update position/direction of current arrow."""
+        if not self.is_animation_running:
+            return
+
+        # DC mode
+        if self.is_discharging:
+            self.current_arrow_pos -= 3
+            if self.current_arrow_pos < self.BATTERY_X + self.BATTERY_WIDTH:
+                self.current_arrow_pos = self.CAPACITOR_X + self.CAPACITOR_WIDTH
         else:
-            self.current_arrow_pos = self.BATTERY_X + self.BATTERY_WIDTH + 5
+            self.current_arrow_pos += 3
+            if self.current_arrow_pos > self.CAPACITOR_X + self.CAPACITOR_WIDTH:
+                self.current_arrow_pos = self.BATTERY_X + self.BATTERY_WIDTH + 5
+
         self.update()
 
     def paintEvent(self, event) -> None:
@@ -63,7 +87,6 @@ class CircuitDiagram(QWidget):
         painter.setFont(QFont("Arial", self.FONT_SIZE))
 
         # --- Draw circuit components ---
-
         # Battery
         painter.drawLine(self.BATTERY_X, self.BATTERY_Y,
                          self.BATTERY_X + self.BATTERY_WIDTH, self.BATTERY_Y)
@@ -78,7 +101,7 @@ class CircuitDiagram(QWidget):
         painter.drawLine(self.BATTERY_X + self.BATTERY_WIDTH, self.BATTERY_Y,
                          self.R_INT_X, self.BATTERY_Y)
         painter.drawRect(r_int_rect)
-        painter.drawText(r_int_rect, 0x84, "R_int")
+        painter.drawText(r_int_rect, Qt.AlignmentFlag.AlignCenter, "R_int")
 
         # R
         resistor_rect = QRectF(self.RESISTOR_X, self.BATTERY_Y - 15,
@@ -86,7 +109,7 @@ class CircuitDiagram(QWidget):
         painter.drawLine(self.R_INT_X + self.R_INT_WIDTH, self.BATTERY_Y,
                          self.RESISTOR_X, self.BATTERY_Y)
         painter.drawRect(resistor_rect)
-        painter.drawText(resistor_rect, 0x84, "R")
+        painter.drawText(resistor_rect, Qt.AlignmentFlag.AlignCenter, "R")
 
         # Capacitor
         painter.drawLine(self.RESISTOR_X + self.RESISTOR_WIDTH, self.BATTERY_Y,
@@ -114,18 +137,34 @@ class CircuitDiagram(QWidget):
 
     def draw_current_arrow(self, painter: QPainter) -> None:
         """Draw a small arrow indicating current movement."""
+        if not self.is_DC:  # Не рисовать стрелку в AC режиме
+            return
+
         arrow_size = 9
         y = self.BATTERY_Y
 
-        path = QPolygonF([
-            QPointF(self.current_arrow_pos, y - arrow_size // 2),
-            QPointF(self.current_arrow_pos + arrow_size, y),
-            QPointF(self.current_arrow_pos, y + arrow_size // 2)
-        ])
+        # DC mode
+        arrow_x = self.current_arrow_pos
+        direction = -1 if self.is_discharging else 1
+        color = QColor("green")
 
-        painter.setBrush(QBrush(QColor("green")))
+        if direction > 0:
+            path = QPolygonF([
+                QPointF(arrow_x, y - arrow_size // 2),
+                QPointF(arrow_x + arrow_size, y),
+                QPointF(arrow_x, y + arrow_size // 2)
+            ])
+        else:
+            path = QPolygonF([
+                QPointF(arrow_x + arrow_size, y - arrow_size // 2),
+                QPointF(arrow_x, y),
+                QPointF(arrow_x + arrow_size, y + arrow_size // 2)
+            ])
+
+        painter.setBrush(QBrush(color))
         painter.drawPolygon(path)
 
+        # Current label
         painter.setPen(QColor("white"))
         painter.setFont(QFont("Arial", self.FONT_SIZE))
-        painter.drawText(self.current_arrow_pos - 5, y - 5, "I(А)")
+        painter.drawText(arrow_x - 5, y - 5, "I(А)")

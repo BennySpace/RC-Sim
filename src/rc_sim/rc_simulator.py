@@ -235,7 +235,6 @@ class RCSimulator(QMainWindow):  # pylint: disable=too-many-instance-attributes
             resistance = float(self.resistance_input.text())
             emf = float(self.voltage_input.text())
             internal_resistance = float(self.internal_resistance_input.text())
-            source_type = self.source_combo.currentText()
             discharge = self.mode_combo.currentText() == "Разрядка"
             alpha = float(self.temp_coeff_input.text())
             temperature = float(self.temperature_input.text())
@@ -245,7 +244,7 @@ class RCSimulator(QMainWindow):  # pylint: disable=too-many-instance-attributes
             return
 
         if not self.calculator.set_parameters(
-            capacitance, resistance, emf, source_type, alpha, temperature, internal_resistance
+                capacitance, resistance, emf, "DC", alpha, temperature, internal_resistance
         ):
             QMessageBox.critical(
                 self, "Ошибка",
@@ -254,21 +253,11 @@ class RCSimulator(QMainWindow):  # pylint: disable=too-many-instance-attributes
             return
 
         if self.calculator.calculate(time_step=self.TIME_STEP, discharge=discharge):
-            logging.debug(
-                "Before plotting: time_len=%s, Vc_len=%s, I_len=%s",
-                len(self.calculator.time), len(self.calculator.Vc), len(self.calculator.I)
-            )
-            print(
-                f"Time: len={len(self.calculator.time)}, first 5={self.calculator.time[:5]}"
-            )
-            print(
-                f"Vc: len={len(self.calculator.Vc)}, first 5={self.calculator.Vc[:5]}"
-            )
-            print(
-                f"I: len={len(self.calculator.I)}, first 5={self.calculator.I[:5]}"
-            )
             self.update_table()
             interval = self.animation_speed_slider.value()
+            self.circuit_diagram.is_discharging = (self.mode_combo.currentText() == "Разрядка")
+            self.circuit_diagram.is_DC = (self.source_combo.currentText() == "DC")
+            self.circuit_diagram.start_animation()
             self.plot_widget.update_plot(
                 self.calculator.time,
                 self.calculator.Vc,
@@ -294,10 +283,11 @@ class RCSimulator(QMainWindow):  # pylint: disable=too-many-instance-attributes
 
         if self.is_animation_paused:
             self.plot_widget.anim.event_source.stop()
+            self.circuit_diagram.stop_animation()
             self.pause_button.setText("Возобновить")
         else:
             self.plot_widget.anim.event_source.start()
-            self.plot_widget.canvas.flush_events()
+            self.circuit_diagram.start_animation()
             self.pause_button.setText("Пауза")
 
     def save_plot_to_png(self) -> None:
@@ -446,3 +436,4 @@ class RCSimulator(QMainWindow):  # pylint: disable=too-many-instance-attributes
             self.result_table.setItem(row, 0, QTableWidgetItem(param))
             self.result_table.setItem(row, 1, QTableWidgetItem(value))
         self.result_table.resizeColumnsToContents()
+
