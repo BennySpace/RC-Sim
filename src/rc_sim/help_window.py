@@ -44,15 +44,15 @@ class HelpWindow(QDialog):
         "и используется в электронике для фильтрации сигналов, создания таймеров и в других "
         "приложениях.\n\n"
         "Основные параметры:\n"
-        "- Ёмкость (C): в микрофарадах (мкФ), определяет способность конденсатора накапливать заряд.\n" # pylint: disable=line-too-long
+        "- Ёмкость (C): в микрофарадах (мкФ), определяет способность конденсатора накапливать заряд.\n"  # pylint: disable=line-too-long
         "- Сопротивление (R): в омах (Ом), ограничивает ток в цепи.\n"
-        "- Внутреннее сопротивление источника (R_int): в омах (Ом), моделирует потери источника питания.\n" # pylint: disable=line-too-long
+        "- Внутреннее сопротивление источника (R_int): в омах (Ом), моделирует потери источника питания.\n"  # pylint: disable=line-too-long
         "- ЭДС (E): амплитуда источника в вольтах (В).\n"
         "- Температурный коэффициент (α): влияет на сопротивление при изменении температуры.\n"
         "- Температура (T): влияет на общее сопротивление по формуле "
         "R_total = (R + R_int)(1 + α(T - 25)).\n\n"
         "Постоянная времени (τ) определяет скорость зарядки/разрядки конденсатора и рассчитывается "
-        "как τ = (R + R_int) · C. Чем больше τ, тем медленнее изменяется напряжение на конденсаторе.\n\n"   # pylint: disable=line-too-long
+        "как τ = (R + R_int) · C. Чем больше τ, тем медленнее изменяется напряжение на конденсаторе.\n\n"  # pylint: disable=line-too-long
         "Обозначения в формулах:\n"
         "- V_C: Напряжение на конденсаторе (В).\n"
         "- E: Электродвижущая сила источника (В).\n"
@@ -74,6 +74,7 @@ class HelpWindow(QDialog):
         self.setup_ui()
 
     def setup_ui(self) -> None:
+        """Set up the user interface for the help window."""
         layout = QVBoxLayout(self)
         container = QWidget()
         container_layout = QVBoxLayout(container)
@@ -104,6 +105,7 @@ class HelpWindow(QDialog):
         layout.addWidget(scroll_area)
 
     def add_dc_formulas(self, container_layout: QVBoxLayout) -> None:
+        """Add DC-related formulas to the container layout."""
         dc_label = QLabel("Для постоянного тока (DC):")
         dc_label.setProperty("class", "header")
         dc_label.setStyleSheet("font-size: 16px; color: #4D8CFF;")
@@ -118,17 +120,17 @@ class HelpWindow(QDialog):
             (
                 r"V_C(t) = E e^{-t / \tau}",
                 "Напряжение на конденсаторе (разрядка)",
-                "V_C: напряжение на конденсаторе, E: начальное напряжение, t: время, τ: постоянная времени."    # pylint: disable=line-too-long
+                "V_C: напряжение на конденсаторе, E: начальное напряжение, t: время, τ: постоянная времени."  # pylint: disable=line-too-long
             ),
             (
                 r"I(t) = \frac{E}{R + R_{\text{int}}} e^{-t / \tau}",
                 "Ток (зарядка)",
-                "I: ток, E: ЭДС, R: сопротивление, R_int: внутреннее сопротивление, t: время, τ: постоянная времени."   # pylint: disable=line-too-long
+                "I: ток, E: ЭДС, R: сопротивление, R_int: внутреннее сопротивление, t: время, τ: постоянная времени."  # pylint: disable=line-too-long
             ),
             (
                 r"\tau = (R + R_{\text{int}}) \cdot C",
                 "Постоянная времени",
-                "τ: постоянная времени, R: сопротивление, R_int: внутреннее сопротивление, C: ёмкость." # pylint: disable=line-too-long
+                "τ: постоянная времени, R: сопротивление, R_int: внутреннее сопротивление, C: ёмкость."  # pylint: disable=line-too-long
             )
         ]
 
@@ -136,6 +138,7 @@ class HelpWindow(QDialog):
             container_layout.addWidget(self.create_formula_label(formula, desc, components))
 
     def add_ac_formulas(self, container_layout: QVBoxLayout) -> None:
+        """Add AC-related formulas to the container layout."""
         ac_label = QLabel("Для переменного тока (AC):")
         ac_label.setProperty("class", "header")
         ac_label.setStyleSheet("font-size: 16px; color: #4D8CFF;")
@@ -145,7 +148,7 @@ class HelpWindow(QDialog):
             (
                 r"Z = \sqrt{(R + R_{\text{int}})^2 + \frac{1}{(\omega C)^2}}",
                 "Импеданс",
-                "Z: импеданс, R: сопротивление, R_int: внутреннее сопротивление, ω: угловая частота, C: ёмкость."   # pylint: disable=line-too-long
+                "Z: импеданс, R: сопротивление, R_int: внутреннее сопротивление, ω: угловая частота, C: ёмкость."  # pylint: disable=line-too-long
             ),
             (
                 r"V_C(t) = \frac{E \sin(\omega t)}{\sqrt{1 + (\omega (R + R_{\text{int}}) C)^2}}",
@@ -165,6 +168,7 @@ class HelpWindow(QDialog):
             container_layout.addWidget(self.create_formula_label(formula, desc, components))
 
     def add_energy_formulas(self, container_layout: QVBoxLayout) -> None:
+        """Add energy-related formulas to the container layout."""
         energy_label = QLabel("Энергетические характеристики:")
         energy_label.setProperty("class", "header")
         energy_label.setStyleSheet("font-size: 16px; color: #4D8CFF;")
@@ -187,6 +191,16 @@ class HelpWindow(QDialog):
             container_layout.addWidget(self.create_formula_label(formula, desc, components))
 
     def create_formula_label(self, formula: str, description: str, components: str) -> QLabel:
+        """Create a widget containing a rendered formula and its description.
+
+        Args:
+            formula (str): LaTeX string of the formula to render.
+            description (str): Brief description of the formula.
+            components (str): Explanation of the formula's variables.
+
+        Returns:
+            QLabel: A widget containing the rendered formula image and its description.
+        """
         temp_file = os.path.join(tempfile.gettempdir(), f"formula_{uuid.uuid4()}.png")
         plt.figure(figsize=(self.FIGURE_WIDTH, self.FIGURE_HEIGHT), dpi=self.FIGURE_DPI)
         plt.text(0.5, 0.5, f"${formula}$", fontsize=self.FONT_SIZE, ha='center', va='center', color='#4D8CFF')  # pylint: disable=line-too-long
@@ -210,7 +224,15 @@ class HelpWindow(QDialog):
         self.temp_files.append(temp_file)
         return container
 
-    def closeEvent(self, event: QDialog.closeEvent) -> None:    # pylint: disable=invalid-name
+    def closeEvent(self, event: QDialog.closeEvent) -> None:  # pylint: disable=invalid-name
+        """Handle the dialog close event by cleaning up temporary files.
+
+        Args:
+            event: The close event triggered when the dialog is closed.
+
+        Returns:
+            None: Accepts the event to allow the dialog to close.
+        """
         for temp_file in self.temp_files:
             if os.path.exists(temp_file):
                 try:

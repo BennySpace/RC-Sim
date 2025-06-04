@@ -1,7 +1,17 @@
+"""
+Module for displaying an RC circuit diagram with animated charge and current visualization.
+
+This module provides the `CircuitDiagram` class, a PyQt6 widget that renders a graphical
+representation of an RC circuit, including a battery, resistors, capacitor, and animated
+current flow and charge level indicators.
+"""
+
+# pylint: disable=no-name-in-module
 from typing import Optional
 from PyQt6.QtWidgets import QWidget
 from PyQt6.QtGui import QPainter, QPen, QBrush, QColor, QFont, QPolygonF
 from PyQt6.QtCore import QRectF, QTimer, QPointF
+# pylint: enable=no-name-in-module
 
 
 class CircuitDiagram(QWidget):
@@ -35,10 +45,10 @@ class CircuitDiagram(QWidget):
         self.setFixedSize(self.DIAGRAM_WIDTH, self.DIAGRAM_HEIGHT)
         self.charge_level: float = 0.0
 
-        self.current_arrow_pos = self.BATTERY_X + self.BATTERY_WIDTH + 5  # начальная позиция стрелки
+        self.current_arrow_pos = self.BATTERY_X + self.BATTERY_WIDTH + 5
         self.arrow_timer = QTimer(self)
         self.arrow_timer.timeout.connect(self.update_arrow_position)
-        self.arrow_timer.start(100)  # обновление каждые 100 мс
+        self.arrow_timer.start(100)  # Update every 100 ms
 
     def set_charge_level(self, vc: float, v0: float) -> None:
         """Set the charge level for visualization."""
@@ -54,6 +64,7 @@ class CircuitDiagram(QWidget):
             self.current_arrow_pos = self.BATTERY_X + self.BATTERY_WIDTH + 5
         self.update()
 
+    # pylint: disable=invalid-name, unused-argument
     def paintEvent(self, event) -> None:
         """Paint the RC circuit diagram."""
         painter = QPainter(self)
@@ -111,6 +122,7 @@ class CircuitDiagram(QWidget):
         self.draw_current_arrow(painter)
 
         painter.end()
+    # pylint: enable=invalid-name, unused-argument
 
     def draw_current_arrow(self, painter: QPainter) -> None:
         """Draw a small arrow indicating current movement."""
