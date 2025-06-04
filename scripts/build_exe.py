@@ -4,7 +4,7 @@ import shutil
 import site
 import warnings
 
-import PyInstaller.__main__
+import PyInstaller.__main__ # pylint: disable=import-error
 
 
 def build_exe() -> None:
