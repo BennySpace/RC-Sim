@@ -2,8 +2,8 @@
 
 ![Python](https://img.shields.io/badge/Python-3.8%2B-yellow)
 ![PyQt6](https://img.shields.io/badge/PyQt6-6.0%2B-orange)
-![PyQt6](https://img.shields.io/badge/matplotlib-3.2.0%2B-blue)
-![PyQt6](https://img.shields.io/badge/numpy-1.20.0%2B-darkblue)
+![matplotlib](https://img.shields.io/badge/matplotlib-3.2.0%2B-blue)
+![numpy](https://img.shields.io/badge/numpy-1.20.0%2B-darkblue)
 
 **RC-Sim** is an interactive application for simulating transient processes in an RC circuit (capacitor charging and discharging) with a graphical user interface. The program allows users to configure circuit parameters, visualize voltage and current in real-time with animation, and export results to CSV for further analysis.
 
@@ -80,30 +80,6 @@ numpy>=1.20.0
    - **Save Graph**: Export the graph as PNG.
    - **Help**: View usage instructions.
    - **Exit**: Close the application.
-
-[//]: # ()
-[//]: # (## Project Structure)
-
-[//]: # ()
-[//]: # (```plaintext)
-
-[//]: # (rc-simulator/)
-
-[//]: # (├── main.py                 # Application entry point)
-
-[//]: # (├── rc_calculator.py        # RC circuit calculation logic)
-
-[//]: # (├── plot_widget.py          # Widget for graphs with animation)
-
-[//]: # (├── circuit_diagram.py      # RC circuit diagram visualization)
-
-[//]: # (├── help_window.py          # Help window)
-
-[//]: # (├── requirements.txt        # Dependencies)
-
-[//]: # (└── README.md               # Documentation)
-
-[//]: # (```)
 
 ## CSV Export Examples
 
