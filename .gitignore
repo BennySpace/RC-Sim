@@ -1,6 +1,8 @@
 .vscode/
 .idea/
-
 __pycache__/
 .venv/
 .github
+build/
+dist/
+RC_Simulator.spec
