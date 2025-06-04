@@ -3,6 +3,6 @@
 __pycache__/
 .venv/
 .github
-build/
 dist/
+build/
 RC_Simulator.spec
