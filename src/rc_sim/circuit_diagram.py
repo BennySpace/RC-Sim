@@ -48,12 +48,18 @@ class CircuitDiagram(QWidget):
         self.arrow_timer.timeout.connect(self.update_arrow_position)
         self.is_animation_running = False
         self.is_discharging = False
-        self.is_DC = False  # pylint: disable=invalid-name
+        self.is_DC = False
         self.arrow_direction = 1
+        self.charge_polarity = 1  # Добавляем для отслеживания полярности в AC
 
     def set_charge_level(self, vc: float, v0: float) -> None:
         """Set the charge level for visualization."""
-        self.charge_level = vc / v0 if v0 != 0 else 0.0
+        if self.is_DC:
+            self.charge_level = vc / v0 if v0 != 0 else 0.0
+        else:
+            # В AC-режиме используем абсолютное значение напряжения для уровня заряда
+            self.charge_level = abs(vc) / v0 if v0 != 0 else 0.0
+            self.charge_polarity = 1 if vc >= 0 else -1  # Запоминаем полярность
         self.update()
 
     def start_animation(self) -> None:
@@ -134,9 +140,29 @@ class CircuitDiagram(QWidget):
         painter.drawText(self.CAPACITOR_X + 18, self.BATTERY_Y, "C")
 
         # --- Draw charge level ---
-        painter.setBrush(QBrush(QColor(255, 255, 0, int(255 * self.charge_level))))
-        painter.drawRect(QRectF(self.CHARGE_RECT_X, self.BATTERY_Y - self.CHARGE_RECT_HEIGHT // 2,
-                                self.CHARGE_RECT_WIDTH, self.CHARGE_RECT_HEIGHT))
+        if self.is_DC:
+            painter.setBrush(QBrush(QColor(255, 255, 0, int(255 * self.charge_level))))
+            painter.drawRect(QRectF(self.CHARGE_RECT_X, self.BATTERY_Y - self.CHARGE_RECT_HEIGHT // 2,
+                                    self.CHARGE_RECT_WIDTH, self.CHARGE_RECT_HEIGHT))
+        else:
+            # В AC-режиме рисуем заряд с учётом полярности
+            charge_height = self.CHARGE_RECT_HEIGHT * self.charge_level
+            if self.charge_polarity >= 0:
+                painter.setBrush(QBrush(QColor(255, 255, 0, 200)))  # Желтый для положительного заряда
+                painter.drawRect(QRectF(
+                    self.CHARGE_RECT_X,
+                    self.BATTERY_Y + self.CHARGE_RECT_HEIGHT // 2 - charge_height,
+                    self.CHARGE_RECT_WIDTH,
+                    charge_height
+                ))
+            else:
+                painter.setBrush(QBrush(QColor(255, 0, 0, 200)))  # Красный для отрицательного заряда
+                painter.drawRect(QRectF(
+                    self.CHARGE_RECT_X,
+                    self.BATTERY_Y - self.CHARGE_RECT_HEIGHT // 2,
+                    self.CHARGE_RECT_WIDTH,
+                    charge_height
+                ))
 
         # --- Draw animated current arrow ---
         self.draw_current_arrow(painter)

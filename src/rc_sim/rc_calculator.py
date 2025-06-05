@@ -95,7 +95,6 @@ class RCCalculator:  # pylint: disable=too-many-instance-attributes
         Returns:
             True if calculations succeed, False otherwise.
         """
-        # pylint: disable=line-too-long,invalid-name
         try:
             R_temp = self.R * (1 + self.alpha * (
                         self.temperature - self.REFERENCE_TEMPERATURE)) + self.R_int
@@ -105,35 +104,44 @@ class RCCalculator:  # pylint: disable=too-many-instance-attributes
                 logging.error(f"Invalid time constant: tau={self.tau}")  # pylint: disable=logging-fstring-interpolation
                 return False
 
-            t_max = self.TAU_MULTIPLIER * self.tau
+            if self.source_type == 'DC':
+                t_max = self.TAU_MULTIPLIER * self.tau
+            else:  # AC mode
+                omega = self.PI * self.AC_FREQUENCY
+                period = 2 * np.pi / omega  # Период синусоиды
+                t_max = 5 * period  # 5 периодов для отображения
+
             num_points = int(t_max / time_step) + 1
             self.time = np.linspace(0, t_max, num_points)
 
             if self.source_type == 'DC':
                 if discharge:
-                    self.Vc = self.V0 * np.exp(-self.time / self.tau)  # pylint: disable=invalid-unary-operand-type
-                    self.I = -(self.V0 / R_temp) * np.exp(
-                        -self.time / self.tau)  # pylint: disable=invalid-unary-operand-type
+                    self.Vc = self.V0 * np.exp(-self.time / self.tau)
+                    self.I = -(self.V0 / R_temp) * np.exp(-self.time / self.tau)
                 else:
-                    self.Vc = self.V0 * (
-                                1 - np.exp(-self.time / self.tau))  # pylint: disable=invalid-unary-operand-type
-                    self.I = (self.V0 / R_temp) * np.exp(
-                        -self.time / self.tau)  # pylint: disable=invalid-unary-operand-type
+                    self.Vc = self.V0 * (1 - np.exp(-self.time / self.tau))
+                    self.I = (self.V0 / R_temp) * np.exp(-self.time / self.tau)
                 self.phase_shift = 0
             else:
                 omega = self.PI * self.AC_FREQUENCY
-                Z = np.sqrt(R_temp ** 2 + (1 / (omega * self.C)) ** 2)  # pylint: disable=invalid-name
+                Z = np.sqrt(R_temp ** 2 + (1 / (omega * self.C)) ** 2)
                 self.Vc = (
-                        self.V0 * np.sin(omega * self.time) /
-                        np.sqrt(1 + (omega * R_temp * self.C) ** 2)
+                    self.V0 * np.sin(omega * self.time) /
+                    np.sqrt(1 + (omega * R_temp * self.C) ** 2)
                 )
                 self.I = (
-                        (self.V0 / Z) *
-                        np.sin(omega * self.time - np.arctan(1 / (omega * R_temp * self.C)))
+                    (self.V0 / Z) *
+                    np.sin(omega * self.time - np.arctan(1 / (omega * R_temp * self.C)))
                 )
                 self.phase_shift = np.arctan(1 / (omega * R_temp * self.C))
 
-            self.energy = self.ENERGY_COEFF * self.C * self.Vc[-1] ** 2
+            if self.source_type == 'DC':
+                self.energy = self.ENERGY_COEFF * self.C * self.Vc[-1] ** 2
+            else:
+                omega = self.PI * self.AC_FREQUENCY
+                V_rms = self.V0 / (np.sqrt(2) * np.sqrt(1 + (omega * R_temp * self.C) ** 2))
+                self.energy = self.ENERGY_COEFF * self.C * V_rms ** 2
+
             self.power_loss = np.mean(self.I ** 2 * R_temp)
 
             if not all(np.isfinite(arr).all() for arr in [self.time, self.Vc, self.I]):

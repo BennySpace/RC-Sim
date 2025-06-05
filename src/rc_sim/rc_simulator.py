@@ -25,7 +25,6 @@ from src.rc_sim.rc_calculator import RCCalculator
 class PreviewDialog(QDialog):  # pylint: disable=too-few-public-methods
     """Dialog for previewing CSV data."""
 
-    # Constants for dialog geometry
     DIALOG_X: int = 200
     DIALOG_Y: int = 200
     DIALOG_WIDTH: int = 600
@@ -40,7 +39,6 @@ class PreviewDialog(QDialog):  # pylint: disable=too-few-public-methods
         """
         super().__init__(parent)
         self.setWindowTitle("Предварительный просмотр CSV")
-        # pylint: disable=duplicate-code
         self.setGeometry(self.DIALOG_X, self.DIALOG_Y,
                          self.DIALOG_WIDTH, self.DIALOG_HEIGHT)
         layout = QVBoxLayout(self)
@@ -56,7 +54,6 @@ class PreviewDialog(QDialog):  # pylint: disable=too-few-public-methods
 class RCSimulator(QMainWindow):  # pylint: disable=too-many-instance-attributes
     """Main window for RC circuit simulation."""
 
-    # Constants for window and UI settings
     WINDOW_X: int = 100
     WINDOW_Y: int = 100
     WINDOW_WIDTH: int = 1200
@@ -69,14 +66,14 @@ class RCSimulator(QMainWindow):  # pylint: disable=too-many-instance-attributes
     DEFAULT_TEMPERATURE: str = "25"
     DEFAULT_PRECISION: str = "6"
     TIME_STEP: float = 0.00001
-    TABLE_ROWS: int = 10
+    TABLE_ROWS: int = 12  # Увеличиваем для V_C и I
     TABLE_COLUMNS: int = 2
     TABLE_WIDTH: int = 300
     SLIDER_MIN: int = 10
     SLIDER_MAX: int = 200
     SLIDER_DEFAULT: int = 50
     SLIDER_TICK: int = 10
-    CSV_MAX_POINTS: int = 1000
+    CSV_MAX_POINTS: int = 100000
     PRECISION_MIN: int = 1
     PRECISION_MAX: int = 12
     PLOT_DPI: int = 300
@@ -97,17 +94,20 @@ class RCSimulator(QMainWindow):  # pylint: disable=too-many-instance-attributes
         super().__init__()
         self.setWindowTitle("RC-Sim: Симуляция RC-цепи")
         icon_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), '..', 'assets',
-                                 'app.ico')  # pylint: disable=line-too-long
+                                 'app.ico')
         if os.path.exists(icon_path):
             self.setWindowIcon(QIcon(icon_path))
         else:
-            logging.warning(f"Icon file not found: {icon_path}")  # pylint:disable=logging-fstring-interpolation
+            logging.warning(f"Icon file not found: {icon_path}")
         self.setGeometry(self.WINDOW_X, self.WINDOW_Y,
                          self.WINDOW_WIDTH, self.WINDOW_HEIGHT)
         self.calculator = RCCalculator()
         self.plot_widget = PlotWidget()
         self.circuit_diagram = CircuitDiagram()
         self.is_animation_paused: bool = False
+        self.current_time = 0.0  # Текущее время для таблицы
+        self.current_vc = 0.0  # Текущее напряжение
+        self.current_i = 0.0  # Текущий ток
         self.setup_ui()
 
     def setup_ui(self) -> None:
@@ -126,25 +126,24 @@ class RCSimulator(QMainWindow):  # pylint: disable=too-many-instance-attributes
         main_layout.addWidget(input_widget)
         main_layout.addWidget(self.plot_widget, stretch=1)
 
+        # Устанавливаем callback для обновления таблицы
+        self.plot_widget.set_update_callback(self.update_table_dynamic)
+
     def setup_form_layout(self, input_layout: QVBoxLayout) -> None:
         """Set up the form layout for input fields."""
         form_layout = QFormLayout()
-        self.capacitance_input = QLineEdit(self.DEFAULT_CAPACITANCE)  # pylint: disable=attribute-defined-outside-init
-        self.resistance_input = QLineEdit(self.DEFAULT_RESISTANCE)  # pylint: disable=attribute-defined-outside-init
-        self.voltage_input = QLineEdit(self.DEFAULT_EMF)  # pylint: disable=attribute-defined-outside-init
-        # pylint: disable=attribute-defined-outside-init
-        self.internal_resistance_input = QLineEdit(
-            self.DEFAULT_INTERNAL_RESISTANCE)
-        self.source_combo = QComboBox()  # pylint: disable=attribute-defined-outside-init
+        self.capacitance_input = QLineEdit(self.DEFAULT_CAPACITANCE)
+        self.resistance_input = QLineEdit(self.DEFAULT_RESISTANCE)
+        self.voltage_input = QLineEdit(self.DEFAULT_EMF)
+        self.internal_resistance_input = QLineEdit(self.DEFAULT_INTERNAL_RESISTANCE)
+        self.source_combo = QComboBox()
         self.source_combo.addItems(["DC", "AC"])
-        self.mode_combo = QComboBox()  # pylint: disable=attribute-defined-outside-init
+        self.mode_combo = QComboBox()
         self.mode_combo.addItems(["Зарядка", "Разрядка"])
-        self.temp_coeff_input = QLineEdit(self.DEFAULT_TEMP_COEFF)  # pylint: disable=attribute-defined-outside-init
-        # pylint: disable=attribute-defined-outside-init
+        self.temp_coeff_input = QLineEdit(self.DEFAULT_TEMP_COEFF)
         self.temperature_input = QLineEdit(self.DEFAULT_TEMPERATURE)
-        self.export_precision_input = QLineEdit(
-            self.DEFAULT_PRECISION)  # pylint: disable=attribute-defined-outside-init
-        self.csv_delimiter_combo = QComboBox()  # pylint: disable=attribute-defined-outside-init
+        self.export_precision_input = QLineEdit(self.DEFAULT_PRECISION)
+        self.csv_delimiter_combo = QComboBox()
         self.csv_delimiter_combo.addItems(["Точка (.)", "Запятая (,)"])
 
         for input_field in (
@@ -157,26 +156,22 @@ class RCSimulator(QMainWindow):  # pylint: disable=too-many-instance-attributes
                 self.export_precision_input,
         ):
             input_field.textChanged.connect(
-                lambda text, field=input_field: self.validate_input_field(field))  # pylint: disable=line-too-long
+                lambda text, field=input_field: self.validate_input_field(field))
 
         form_layout.addRow("Ёмкость (мкФ):", self.capacitance_input)
         form_layout.addRow("Сопротивление (Ом):", self.resistance_input)
         form_layout.addRow("ЭДС (В):", self.voltage_input)
         form_layout.addRow("Внутреннее сопротивление (R_int):", self.internal_resistance_input)
-        form_layout.addRow("Тип источника (.:", self.source_combo)
+        form_layout.addRow("Тип источника:", self.source_combo)
         form_layout.addRow("Режим:", self.mode_combo)
         form_layout.addRow("Температурный коэффициент (1/°C):", self.temp_coeff_input)
         form_layout.addRow("Температура (°C):", self.temperature_input)
         form_layout.addRow("Точность экспорта (знаков):", self.export_precision_input)
-        # pylint: disable=attribute-defined-outside-init
         form_layout.addRow("Десятичный разделитель:", self.csv_delimiter_combo)
 
-        # pylint: disable=attribute-defined-outside-init
         self.animation_speed_label = QLabel(
             f"Скорость анимации (мс): {self.SLIDER_DEFAULT}")
-        # pylint: disable=attribute-defined-outside-init
-        self.animation_speed_slider = QSlider(
-            Qt.Orientation.Horizontal)
+        self.animation_speed_slider = QSlider(Qt.Orientation.Horizontal)
         self.animation_speed_slider.setMinimum(self.SLIDER_MIN)
         self.animation_speed_slider.setMaximum(self.SLIDER_MAX)
         self.animation_speed_slider.setValue(self.SLIDER_DEFAULT)
@@ -193,7 +188,7 @@ class RCSimulator(QMainWindow):  # pylint: disable=too-many-instance-attributes
         run_button.clicked.connect(self.run_simulation)
         input_layout.addWidget(run_button)
 
-        self.pause_button = QPushButton("Пауза")  # pylint: disable=attribute-defined-outside-init
+        self.pause_button = QPushButton("Пауза")
         self.pause_button.clicked.connect(self.toggle_animation)
         input_layout.addWidget(self.pause_button)
 
@@ -221,7 +216,7 @@ class RCSimulator(QMainWindow):  # pylint: disable=too-many-instance-attributes
 
     def setup_result_table(self, input_layout: QVBoxLayout) -> None:
         """Set up the result table."""
-        self.result_table = QTableWidget()  # pylint: disable=attribute-defined-outside-init
+        self.result_table = QTableWidget()
         self.result_table.setRowCount(self.TABLE_ROWS)
         self.result_table.setColumnCount(self.TABLE_COLUMNS)
         self.result_table.setHorizontalHeaderLabels(["Параметр", "Значение"])
@@ -257,13 +252,14 @@ class RCSimulator(QMainWindow):  # pylint: disable=too-many-instance-attributes
             discharge = self.mode_combo.currentText() == "Разрядка"
             alpha = float(self.temp_coeff_input.text())
             temperature = float(self.temperature_input.text())
+            source_type = self.source_combo.currentText()
         except ValueError:
             logging.error("Invalid input parameters")
             QMessageBox.critical(self, "Ошибка", "Введите корректные числовые значения.")
             return
 
         if not self.calculator.set_parameters(
-                capacitance, resistance, emf, "DC", alpha, temperature, internal_resistance
+                capacitance, resistance, emf, source_type, alpha, temperature, internal_resistance
         ):
             QMessageBox.critical(
                 self, "Ошибка",
@@ -271,11 +267,11 @@ class RCSimulator(QMainWindow):  # pylint: disable=too-many-instance-attributes
             )
             return
 
-        if self.calculator.calculate(time_step=self.TIME_STEP, discharge=discharge):
+        if self.calculator.calculate(time_step=self.TIME_STEP, discharge=discharge and source_type == "DC"):
             self.update_table()
             interval = self.animation_speed_slider.value()
-            self.circuit_diagram.is_discharging = (self.mode_combo.currentText() == "Разрядка") # pylint: disable=superfluous-parens
-            self.circuit_diagram.is_DC = (self.source_combo.currentText() == "DC")  # pylint: disable=superfluous-parens
+            self.circuit_diagram.is_discharging = (self.mode_combo.currentText() == "Разрядка" and source_type == "DC")
+            self.circuit_diagram.is_DC = (source_type == "DC")
             self.circuit_diagram.start_animation()
             self.plot_widget.update_plot(
                 self.calculator.time,
@@ -340,7 +336,7 @@ class RCSimulator(QMainWindow):  # pylint: disable=too-many-instance-attributes
 
             if precision < self.PRECISION_MIN or precision > self.PRECISION_MAX:
                 raise ValueError(
-                    f"Точность должна быть от {self.PRECISION_MIN} до {self.PRECISION_MAX}")  # pylint: disable=line-too-long
+                    f"Точность должна быть от {self.PRECISION_MIN} до {self.PRECISION_MAX}")
 
             delimiter = ',' if self.csv_delimiter_combo.currentText() == "Запятая (,)" else '.'
 
@@ -390,7 +386,7 @@ class RCSimulator(QMainWindow):  # pylint: disable=too-many-instance-attributes
 
             if precision < self.PRECISION_MIN or precision > self.PRECISION_MAX:
                 raise ValueError(
-                    f"Точность должна быть от {self.PRECISION_MIN} до {self.PRECISION_MAX}")  # pylint: disable=line-too-long
+                    f"Точность должна быть от {self.PRECISION_MIN} до {self.PRECISION_MAX}")
 
             delimiter = ',' if self.csv_delimiter_combo.currentText() == "Запятая (,)" else '.'
 
@@ -438,7 +434,7 @@ class RCSimulator(QMainWindow):  # pylint: disable=too-many-instance-attributes
         help_window.exec()
 
     def update_table(self) -> None:
-        """Update the result table with simulation parameters."""
+        """Update the result table with static simulation parameters."""
         params = [
             ("Ёмкость (мкФ)", f"{self.calculator.C * 1e6:.2f}"),
             ("Сопротивление (Ом)", f"{self.calculator.R:.2f}"),
@@ -450,6 +446,8 @@ class RCSimulator(QMainWindow):  # pylint: disable=too-many-instance-attributes
             ("Энергия (Дж)", f"{self.calculator.energy:.6f}"),
             ("Тепловые потери (Вт)", f"{self.calculator.power_loss:.6f}"),
             ("Постоянная времени (с)", f"{self.calculator.tau:.6f}"),
+            ("Текущее напряжение (В)", f"{self.current_vc:.6f}"),
+            ("Текущий ток (А)", f"{self.current_i:.6f}"),
         ]
 
         self.result_table.setRowCount(len(params))
@@ -457,3 +455,10 @@ class RCSimulator(QMainWindow):  # pylint: disable=too-many-instance-attributes
             self.result_table.setItem(row, 0, QTableWidgetItem(param))
             self.result_table.setItem(row, 1, QTableWidgetItem(value))
         self.result_table.resizeColumnsToContents()
+
+    def update_table_dynamic(self, time: float, vc: float, i: float) -> None:
+        """Update the result table with dynamic values during animation."""
+        self.current_time = time
+        self.current_vc = vc
+        self.current_i = i
+        self.update_table()

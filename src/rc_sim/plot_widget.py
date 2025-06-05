@@ -1,12 +1,11 @@
 """Module for displaying voltage and current plots for RC circuit simulation."""
 
 import logging
-
-import matplotlib.pyplot as plt
 import numpy as np
 from PyQt6.QtWidgets import QWidget, QVBoxLayout  # pylint: disable=no-name-in-module
 from matplotlib.animation import FuncAnimation
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
+import matplotlib.pyplot as plt
 
 
 class PlotWidget(QWidget):  # pylint: disable=too-many-instance-attributes
@@ -32,6 +31,7 @@ class PlotWidget(QWidget):  # pylint: disable=too-many-instance-attributes
         self.Vc = []  # pylint: disable=invalid-name
         self.I = []  # pylint: disable=invalid-name
         self.V0 = 10  # pylint: disable=invalid-name
+        self.update_callback = None  # Callback для обновления таблицы
 
     def setup_axes(self):
         """Configure the appearance and settings of the plot axes."""
@@ -58,7 +58,10 @@ class PlotWidget(QWidget):  # pylint: disable=too-many-instance-attributes
         self.ax2.grid(True)
         self.fig.tight_layout()
 
-    # pylint: disable=invalid-name,too-many-arguments,too-many-positional-arguments,too-many-locals,too-many-statements
+    def set_update_callback(self, callback):
+        """Установить callback-функцию для обновления внешних компонентов."""
+        self.update_callback = callback
+
     def update_plot(self, time, Vc, I, V0=10, animate=True, interval=50,
                     circuit_diagram=None):
         """Update the plot with voltage and current data, optionally animating.
@@ -134,7 +137,10 @@ class PlotWidget(QWidget):  # pylint: disable=too-many-instance-attributes
 
                     if circuit_diagram:
                         circuit_diagram.set_charge_level(self.Vc[frame - 1] if frame > 0 else 0,
-                                                         self.V0)  # pylint: disable=line-too-long
+                                                        self.V0)
+
+                    if self.update_callback and frame > 0:
+                        self.update_callback(self.time[frame - 1], self.Vc[frame - 1], self.I[frame - 1])
 
                     self.canvas.flush_events()
                     return self.line1, self.line2
